@@ -1,0 +1,20 @@
+---
+- name: Start docker redis exporter container
+  community.docker.docker_compose:
+    state: present
+    project_name: prometheus_redis_exporter
+    definition:
+      version: '2'
+      services:
+        redis_exporter:
+          image: "{{ redis_exporter_docker_image }}"
+          command: "{{ redis_exporter_options }}" 
+          container_name: "{{ redis_exporter_container_name }}"
+          ports:
+            - "{{ redis_exporter_ip }}:{{ redis_exporter_port }}:9121"
+          hostname: "{{ ansible_host }}"
+          restart: always
+      networks:
+        default:
+          external:
+            name: "{{ redis_exporter_docker_network_name }}"
