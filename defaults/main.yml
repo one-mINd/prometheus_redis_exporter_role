@@ -68,3 +68,13 @@ redis_exporter_options:
   - "web.telemetry-path /{{ redis_exporter_web_telemetry_path }}"
 #  redis.alias only for 0.x version https://github.com/oliver006/redis_exporter/pull/256
 #  - "redis.alias {{ redis_exporter_redis_alias }}"
+
+redis_exporter_docker_services:
+  - name: redis_exporter
+
+redis_exporter_swarm_deploy:
+  mode: replicated
+  replicas: 1
+  placement:
+    constraints:
+      - node.labels.redis_exporter == true
