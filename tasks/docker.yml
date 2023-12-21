@@ -17,3 +17,51 @@
         default:
           external:
             name: "{{ redis_exporter_docker_network_name }}"
+  when: redis_exporter_swarm_manager is undefined
+
+- name: Deploy redis_exporter to docker swarm
+  block:
+    - name: Ensure pip installation
+      package:
+        name: "python3-pip"
+        state: present
+
+    - name: Install newer version of pip itself
+      pip:
+        name: "pip"
+        state: latest
+        executable: pip3
+
+    - name: Install jsondiff from pip
+      pip:
+        name: "jsondiff"
+        state: present
+        executable: pip3
+
+    - name: Deploy redis_exporter docker container in swarm
+      community.docker.docker_stack:
+        state: present
+        name: "{{ redis_exporter_stack_name | default('redis_exporter')}}"
+        with_registry_auth: yes
+        compose:
+          - version: '3.5'
+            services: |
+              {{
+                {
+                  item.name: {
+                    "image": redis_exporter_docker_image,
+                    "hostname": item.name,
+                    "labels": redis_exporter_docker_labels | default([]),
+                    "environment": item.environment | default([]),
+                    "deploy": redis_exporter_swarm_deploy
+                  }
+                }
+              }}
+            networks:
+              default:
+                external:
+                  name: "{{ redis_exporter_docker_network_name }}"
+      run_once: True
+      loop: "{{ redis_exporter_docker_services }}"
+  delegate_to: "{{ redis_exporter_swarm_manager }}"
+  when: redis_exporter_swarm_manager is defined

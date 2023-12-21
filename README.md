@@ -20,6 +20,15 @@ This ansible role installs a Prometheus Redis Exporter in a debian environment.
 These instructions will get you a copy of the role for your ansible playbook. Once launched, it will install an [Prometheus Redis Exporter](https://github.com/oliver006/redis_exporter) server in a Debian system.
 
 *Note:* Beginning with the 2.0 version, the default behaviour is the service sending logs to systemd's journal instead to a log file. You can change it modifying the necessary ansible vars (see defaults/main.yml)
+
+If you use docker swarm, you should specify variables for the host on which
+the container is supposed to be run, and also indicate the name of the swarm
+manager through which the stack will be deployed in variable
+`redis_exporter_swarm_manager`
+```yaml
+redis_exporter_swarm_manager: swarm-manager01
+```
+
 ### Prerequisities
 
 Ansible 2.8.x.x version installed.
