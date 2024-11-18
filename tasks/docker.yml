@@ -1,10 +1,9 @@
 ---
 - name: Start docker redis exporter container
-  community.docker.docker_compose:
+  community.docker.docker_compose_v2:
     state: present
     project_name: prometheus_redis_exporter
     definition:
-      version: '2'
       services:
         redis_exporter:
           image: "{{ redis_exporter_docker_image }}"
@@ -15,8 +14,8 @@
           restart: always
       networks:
         default:
-          external:
-            name: "{{ redis_exporter_docker_network_name }}"
+          external: true
+          name: "{{ redis_exporter_docker_network_name }}"
   when: redis_exporter_swarm_manager is undefined
 
 - name: Deploy redis_exporter to docker swarm
