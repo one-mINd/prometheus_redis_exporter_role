@@ -7,7 +7,7 @@
       services:
         redis_exporter:
           image: "{{ redis_exporter_docker_image }}"
-          command: "{{ redis_exporter_options }}" 
+          command: "{{ redis_exporter_options }}"
           container_name: "{{ redis_exporter_container_name }}"
           ports:
             - "{{ redis_exporter_ip }}:{{ redis_exporter_port }}:9121"
@@ -30,12 +30,26 @@
         name: "pip"
         state: latest
         executable: pip3
+      when:
+        - ansible_distribution == "ubuntu"
+        - ansible_distribution_major_version != 24
 
     - name: Install jsondiff from pip
       pip:
         name: "jsondiff"
         state: present
         executable: pip3
+      when:
+        - ansible_distribution == "ubuntu"
+        - ansible_distribution_major_version != 24
+
+    - name: Ensure jsondiff
+      package:
+        name: "python3-jsondiff"
+        state: present
+      when:
+        - ansible_distribution == "ubuntu"
+        - ansible_distribution_major_version == 24
 
     - name: Deploy redis_exporter docker container in swarm
       community.docker.docker_stack:
