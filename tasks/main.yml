@@ -1,24 +1,24 @@
 ---
 - name: REDIS_EXPORTER | Setup container
-  include: docker.yml
+  include_tasks: docker.yml
   tags:
     - install
   when: redis_exporter_dockerize
 
 - name: REDIS_EXPORTER | Install
-  include: install.yml
+  include_tasks: install.yml
   tags:
     - install
   when: not redis_exporter_dockerize
 
 - name: REDIS_EXPORTER | Configure
-  include: config.yml
+  include_tasks: config.yml
   tags:
     - configure
   when: not redis_exporter_dockerize
 
 - name: REDIS_EXPORTER | Service
-  include: service.yml
+  include_tasks: service.yml
   tags:
     - service
   when: not redis_exporter_dockerize
