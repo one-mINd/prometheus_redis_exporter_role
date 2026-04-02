@@ -1,12 +1,43 @@
 ---
-- name: Start docker redis exporter container
+- name: REDIS EXPORTER | Check container registry type
+  assert:
+    that: 
+      - redis_exporter_type_private_registry in ['yc_cr']
+    fail_msg: >
+      Invalid redis_exporter_type_private_registry: '{{ redis_exporter_type_private_registry }}'.
+      Allowed: 'yc_cr'.
+  when: redis_exporter_use_private_registry
+
+- name: REDIS EXPORTER | Create IAM token in registry yc_cr
+  ansible.builtin.shell: |
+    curl --header Metadata-Flavor:Google 169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token | \
+    cut -f1 -d',' | \
+    cut -f2 -d':' | \
+    tr -d '"' 
+  when: redis_exporter_use_private_registry and redis_exporter_type_private_registry == "yc_cr"
+  register: yc_cr_registry_token
+
+- name: REDIS EXPORTER | Get IAM token in registry yc_cr
+  ansible.builtin.set_fact:
+    redis_exporter_yc_cr_registry_token: "{{ yc_cr_registry_token.stdout }}"
+  when: redis_exporter_use_private_registry and redis_exporter_type_private_registry == "yc_cr"
+
+- name: REDIS EXPORTER | Login into private docker registry
+  community.docker.docker_login:
+    registry_url: cr.yandex
+    username: iam
+    password: "{{ redis_exporter_yc_cr_registry_token }}"
+    reauthorize: true
+  when: redis_exporter_use_private_registry and redis_exporter_type_private_registry == "yc_cr"
+
+- name: REDIS EXPORTER | Start docker redis exporter container
   community.docker.docker_compose_v2:
     state: present
     project_name: prometheus_redis_exporter
     definition:
       services:
         redis_exporter:
-          image: "{{ redis_exporter_docker_image }}"
+          image: "{{ redis_exporter_docker_image }}:{{ redis_exporter_version }}"
           command: "{{ redis_exporter_options }}"
           container_name: "{{ redis_exporter_container_name }}"
           ports:
@@ -18,7 +49,7 @@
           name: "{{ redis_exporter_docker_network_name }}"
   when: redis_exporter_swarm_manager is undefined
 
-- name: Deploy redis_exporter to docker swarm
+- name: REDIS EXPORTER | Deploy redis_exporter to docker swarm
   block:
     - name: Ensure pip installation
       package:
